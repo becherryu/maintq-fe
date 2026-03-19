@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'maintq-fe'
+        CONTAINER_NAME = 'maintq_fe'
+        PORT = '8001'
+    }
+
+    stages {
+        stage('Docker Build') {
+            steps {
+                dir('FE') {
+                    sh '/usr/bin/docker build -t ${IMAGE_NAME}:latest .'
+                }
+            }
+        }
+
+        stage('Container Up') {
+            steps {
+                // 기존 컨테이너 제거 후 재실행
+                sh '''
+                    /usr/bin/docker rm -f ${CONTAINER_NAME} || true
+                    /usr/bin/docker run -d \
+                        --name ${CONTAINER_NAME} \
+                        -p ${PORT}:8001 \
+                        ${IMAGE_NAME}:latest
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '배포 완료! http://localhost:8001 에서 확인하세요.'
+        }
+        failure {
+            echo '파이프라인 실패. 로그를 확인해주세요.'
+        }
+    }
+}

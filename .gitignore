@@ -1,0 +1,47 @@
+# Environment / secrets
+*.env
+
+# OS
+.DS_Store
+
+# Frontend
+**/node_modules/
+**/dist/
+**/package-lock.json
+
+# Backend / Gradle
+.gradle-user-home/
+BE/auth-server/.gradle/
+BE/auth-server/.gradle-user-home/
+BE/auth-server/build/
+BE/auth-server/out/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Python venv
+maintq/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.claude/
+
+# Generated reports / artifacts
+BE/AI-server/reports_pdf/
+BE/AI-server/model/backups/
+retrian_reports_pdf/
+*.pdf
+*.html
+
+# Backup / duplicate files
+worker_backup*.py
+**/[* 2].py
+
+# Local data
+BE/AI-server/data/
+mongo/
+AI_part/
