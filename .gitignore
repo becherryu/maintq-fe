@@ -7,7 +7,7 @@
 # Frontend
 **/node_modules/
 **/dist/
-**/package-lock.json
+
 
 # Backend / Gradle
 .gradle-user-home/
