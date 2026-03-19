@@ -3,15 +3,17 @@ name: CI - Build & Push FE Docker Image
 on:
     push:
         branches:
-            - ahn-ci
-        paths:
-            - 'FE/**'
-            - '.github/workflows/ci.yml'
+            - main
+            - dev
     pull_request:
         branches:
-            - ahn-ci
-        paths:
-            - 'FE/**'
+            - main
+            - dev
+    workflow_dispatch:
+    schedule:
+        - cron: '0 0 * * 1'  # 매주 월요일 자정 (UTC)
+    release:
+        types: [published]
 
 env:
     HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }} # e.g. harbor.example.com
@@ -26,6 +28,21 @@ jobs:
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: npm
+                  cache-dependency-path: FE/package-lock.json
+
+            - name: Install dependencies
+              run: npm ci
+              working-directory: ./FE
+
+            - name: Build
+              run: npm run build
+              working-directory: ./FE
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
@@ -46,7 +63,7 @@ jobs:
                       type=ref,event=branch
                       type=ref,event=pr
                       type=sha,prefix=,format=short
-                      type=raw,value=latest,enable=${{ github.ref == 'refs/heads/ahn-ci' }}
+                      type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
             - name: Build and push Docker image
               uses: docker/build-push-action@v6
