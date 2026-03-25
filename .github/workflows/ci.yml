@@ -18,7 +18,7 @@ on:
 env:
     HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }} # e.g. harbor.example.com
     HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }} # e.g. myproject
-    IMAGE_NAME: A3024
+    IMAGE_NAME: a3024
 
 jobs:
     build-and-push:

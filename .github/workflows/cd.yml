@@ -13,7 +13,7 @@ env:
     EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
     HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
     HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }}
-    IMAGE_NAME: A3024
+    IMAGE_NAME: a3024
     K8S_NAMESPACE: skala3-ai1
     K8S_DEPLOYMENT_NAME: sk3024-maintq-fe
     K8S_CONTAINER_NAME: sk3024-maintq-fe
