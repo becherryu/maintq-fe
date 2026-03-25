@@ -2,47 +2,64 @@ name: CD - Deploy to Kubernetes
 
 on:
     workflow_run:
-        workflows: ["CI - Build & Push FE Docker Image"]
+        workflows: ['CI - Build & Push FE Docker Image']
         types:
             - completed
         branches:
             - main
 
 env:
+    AWS_REGION: ${{ secrets.AWS_REGION }}
+    EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
     HARBOR_REGISTRY: ${{ secrets.HARBOR_REGISTRY }}
     HARBOR_PROJECT: ${{ secrets.HARBOR_PROJECT }}
     IMAGE_NAME: A3024
-    DEPLOYMENT_NAME: sk3024-maintq-fe
-    CONTAINER_NAME: sk3024-maintq-fe
-    NAMESPACE: skala3-ai1
+    K8S_NAMESPACE: skala3-ai1
+    K8S_DEPLOYMENT_NAME: sk3024-maintq-fe
+    K8S_CONTAINER_NAME: sk3024-maintq-fe
 
 jobs:
     deploy:
-        name: Deploy to Kubernetes
+        name: Deploy to EKS
         runs-on: ubuntu-latest
         if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
         steps:
-            - name: Set up kubectl
-              uses: azure/setup-kubectl@v4
-
-            - name: Configure kubeconfig
+            - name: Compute image tag
+              id: meta
               run: |
-                  mkdir -p ~/.kube
-                  echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
+                  SHORT_SHA=$(echo "${{ github.event.workflow_run.head_sha }}" | cut -c1-7)
+                  echo "image_tag=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+                  echo "full_image=${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${SHORT_SHA}" >> "$GITHUB_OUTPUT"
 
-            - name: Get short SHA
-              id: sha
-              run: echo "short=$(echo ${{ github.event.workflow_run.head_sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v4
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.AWS_REGION }}
 
-            - name: Deploy new image
+            - name: Install kubectl
               run: |
-                  kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} \
-                    ${{ env.CONTAINER_NAME }}=${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ env.IMAGE_NAME }}:${{ steps.sha.outputs.short }} \
-                    -n ${{ env.NAMESPACE }}
+                  curl -LO "https://dl.k8s.io/release/$(curl -Ls https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                  chmod +x kubectl
+                  sudo mv kubectl /usr/local/bin/
+
+            - name: Update kubeconfig for EKS
+              run: |
+                  aws eks update-kubeconfig \
+                    --region "${AWS_REGION}" \
+                    --name "${EKS_CLUSTER_NAME}"
+
+            - name: Deploy new image to EKS
+              run: |
+                  kubectl -n "${K8S_NAMESPACE}" set image deployment/"${K8S_DEPLOYMENT_NAME}" \
+                    "${K8S_CONTAINER_NAME}"="${{ steps.meta.outputs.full_image }}"
 
             - name: Wait for rollout
               run: |
-                  kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} \
-                    -n ${{ env.NAMESPACE }} \
-                    --timeout=120s
+                  kubectl -n "${K8S_NAMESPACE}" rollout status deployment/"${K8S_DEPLOYMENT_NAME}" --timeout=120s
+
+            - name: Show deployed image
+              run: |
+                  kubectl -n "${K8S_NAMESPACE}" get deployment "${K8S_DEPLOYMENT_NAME}" -o wide
