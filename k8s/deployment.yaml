@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sk3024-maintq-fe
+    # Ingress, Service와 동일한 네임스페이스
+    namespace: skala3-ai1
+spec:
+    # 실행할 Pod 복제본 수
+    replicas: 1
+    selector:
+        matchLabels:
+            # Service의 selector와 반드시 일치해야 트래픽 연결됨
+            app: sk3024-maintq-fe
+    template:
+        metadata:
+            labels:
+                app: sk3024-maintq-fe
+        spec:
+            imagePullSecrets:
+                # Harbor 프라이빗 레지스트리 접근용 Secret
+                - name: harbor-pull-secret
+            containers:
+                - name: sk3024-maintq-fe
+                  # Harbor 레지스트리에 올린 프론트엔드 이미지
+                  image: amdp-registry.skala-ai.com/skala26a-ai1/a3024:latest
+                  ports:
+                      # nginx가 리슨하는 포트 (Service의 targetPort와 일치)
+                      - containerPort: 8001
+                  resources:
+                      requests:
+                          # 스케줄링 시 최소 보장 리소스
+                          cpu: '100m'
+                          memory: '128Mi'
+                      limits:
+                          # 초과 시 OOMKill 또는 스로틀링
+                          cpu: '500m'
+                          memory: '512Mi'
+                  volumeMounts:
+                      - name: sk3024-storage
+                        mountPath: /data
+            volumes:
+                - name: sk3024-storage
+                  persistentVolumeClaim:
+                      claimName: sk3024-pvc

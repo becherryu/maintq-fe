@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    annotations:
+        # cert-manager가 Let's Encrypt에서 TLS 인증서 자동 발급
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+    name: sk3024-maintq-ingress
+    # 배포된 프론트엔드 앱과 동일한 네임스페이스
+    namespace: skala3-ai1
+    labels:
+        app.kubernetes.io/name: sk3024-maintq-ingress
+spec:
+    # 클러스터에서 사용할 Ingress Controller 지정
+    ingressClassName: public-nginx
+    rules:
+        # *.project.skala-ai.com 와일드카드 DNS 활용한 host 기반 라우팅
+        - host: sk3024-maintq.project.skala-ai.com
+          http:
+              paths:
+                  - path: /
+                    # Prefix: /로 시작하는 모든 경로 허용
+                    pathType: Prefix
+                    backend:
+                        # 트래픽을 전달할 Service
+                        service:
+                            name: sk3024-maintq-fe
+                            port:
+                                number: 8001
+    tls:
+        - hosts:
+              - 'sk3024-maintq.project.skala-ai.com'
+          # cert-manager가 자동 생성하는 TLS 인증서 Secret 이름
+          secretName: sk3024-maintq-tls
