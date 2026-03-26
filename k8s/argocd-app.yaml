@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+    name: sk3024-maintq-app
+    namespace: argocd
+spec:
+    project: default
+    source:
+        repoURL: https://github.com/becherryu/maintq-fe
+        targetRevision: main
+        path: k8s
+    destination:
+        server: https://kubernetes.default.svc
+        namespace: skala3-ai1
+    syncPolicy:
+        automated:
+            prune: true
+            selfHeal: true
