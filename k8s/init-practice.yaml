@@ -1,0 +1,120 @@
+# ConfigMap - 앱 설정값 저장 (코드와 설정 분리)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    name: sk3024-app-config
+    namespace: skala3-ai1
+data:
+    APP_ENV: "dev"
+    APP_NAME: "sk3024-maintq"
+    APP_PORT: "8001"
+---
+# PVC - pod 재시작해도 데이터 유지
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: sk3024-init-pvc
+    namespace: skala3-ai1
+spec:
+    accessModes:
+        - ReadWriteOnce
+    resources:
+        requests:
+            storage: 1Gi
+---
+# Deployment - initContainer + main container
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sk3024-init-practice
+    namespace: skala3-ai1
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            app: sk3024-init-practice
+    template:
+        metadata:
+            labels:
+                app: sk3024-init-practice
+        spec:
+            volumes:
+                - name: sk3024-init-storage
+                  persistentVolumeClaim:
+                      claimName: sk3024-init-pvc   # PVC: 로그 등 영구 저장
+                - name: sk3024-generated-config
+                  emptyDir: {}                      # emptyDir: init↔main 간 파일 공유
+
+            # initContainer - main 시작 전에 먼저 실행되고 종료
+            initContainers:
+                - name: init-config
+                  image: busybox:1.36
+                  command:
+                      - sh
+                      - -c
+                      - |
+                          echo "[Init] 초기화 시작"
+
+                          # PVC에 디렉터리 생성
+                          mkdir -p /data/logs
+                          mkdir -p /data/config
+
+                          # ConfigMap 값으로 app.properties 생성 → emptyDir에 저장
+                          cat <<EOF > /generated-config/app.properties
+                          app.name=${APP_NAME}
+                          app.env=${APP_ENV}
+                          app.port=${APP_PORT}
+                          app.log.path=/data/logs
+                          EOF
+
+                          echo "[Init] 생성된 설정파일:"
+                          cat /generated-config/app.properties
+                          echo "[Init] 초기화 완료 - main container 시작"
+                  env:
+                      - name: APP_ENV
+                        valueFrom:
+                            configMapKeyRef:
+                                name: sk3024-app-config
+                                key: APP_ENV
+                      - name: APP_NAME
+                        valueFrom:
+                            configMapKeyRef:
+                                name: sk3024-app-config
+                                key: APP_NAME
+                      - name: APP_PORT
+                        valueFrom:
+                            configMapKeyRef:
+                                name: sk3024-app-config
+                                key: APP_PORT
+                  volumeMounts:
+                      - name: sk3024-init-storage
+                        mountPath: /data               # PVC 마운트
+                      - name: sk3024-generated-config
+                        mountPath: /generated-config   # emptyDir 마운트
+
+            # main container - initContainer 완료 후 실행
+            containers:
+                - name: main-app
+                  image: busybox:1.36
+                  command:
+                      - sh
+                      - -c
+                      - |
+                          echo "[Main] 앱 시작..."
+
+                          echo "[Main] initContainer가 생성한 설정파일 읽기:"
+                          cat /app/config/app.properties
+
+                          echo "[Main] PVC에 로그 기록..."
+                          echo "$(date) - sk3024-maintq app started" >> /data/logs/app.log
+
+                          echo "[Main] 현재 로그:"
+                          cat /data/logs/app.log
+
+                          echo "[Main] 실행 중..."
+                          sleep 3600
+                  volumeMounts:
+                      - name: sk3024-init-storage
+                        mountPath: /data               # PVC 마운트 (로그 읽기/쓰기)
+                      - name: sk3024-generated-config
+                        mountPath: /app/config         # emptyDir 마운트 (설정파일 읽기)
