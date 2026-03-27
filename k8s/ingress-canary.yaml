@@ -1,0 +1,22 @@
+# 카나리 Ingress - 트래픽의 10%를 v2로 분배
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    name: sk3024-maintq-ingress-canary
+    namespace: skala3-ai1
+    annotations:
+        nginx.ingress.kubernetes.io/canary: "true"        # 카나리 ingress 활성화
+        nginx.ingress.kubernetes.io/canary-weight: "10"   # 10% 트래픽을 v2로 전달
+spec:
+    ingressClassName: public-nginx
+    rules:
+        - host: sk3024-maintq.project.skala-ai.com  # 메인 ingress와 동일한 host
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: sk3024-maintq-fe-v2  # v2 service로 전달
+                            port:
+                                number: 8001

@@ -1,3 +1,4 @@
+# 메인 Ingress - 트래픽의 90% 담당
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -23,7 +24,7 @@ spec:
                     backend:
                         # 트래픽을 전달할 Service
                         service:
-                            name: sk3024-maintq-fe
+                            name: sk3024-maintq-fe-v1 # v1 service로 전달
                             port:
                                 number: 8001
     tls:

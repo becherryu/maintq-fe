@@ -1,15 +1,29 @@
+# v1 Service - v1 Pod에만 트래픽 전달
 apiVersion: v1
 kind: Service
 metadata:
-    name: sk3024-maintq-fe
-    # Deployment, Ingress와 동일한 네임스페이스
+    name: sk3024-maintq-fe-v1
     namespace: skala3-ai1
 spec:
     selector:
-        # 이 라벨을 가진 Pod으로 트래픽 전달 (Deployment의 labels와 일치)
         app: sk3024-maintq-fe
+        version: v1 # version: v1 라벨이 있는 Pod만 선택
     ports:
-        - port: 8001        # Service가 노출하는 포트 (Ingress에서 참조)
-          targetPort: 8001  # 실제 컨테이너 포트
-    # 클러스터 내부에서만 접근 가능 (Ingress를 통해 외부 노출)
+        - port: 8001
+          targetPort: 8001
+    type: ClusterIP
+---
+# v2 Service - v2 Pod에만 트래픽 전달 (카나리)
+apiVersion: v1
+kind: Service
+metadata:
+    name: sk3024-maintq-fe-v2
+    namespace: skala3-ai1
+spec:
+    selector:
+        app: sk3024-maintq-fe
+        version: v2 # version: v2 라벨이 있는 Pod만 선택
+    ports:
+        - port: 8001
+          targetPort: 8001
     type: ClusterIP
