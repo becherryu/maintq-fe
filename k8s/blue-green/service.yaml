@@ -1,0 +1,14 @@
+# 단일 Service - selector 변경으로 순간 트래픽 전환
+apiVersion: v1
+kind: Service
+metadata:
+    name: sk3024-maintq-fe
+    namespace: skala3-ai1
+spec:
+    selector:
+        app: sk3024-maintq-fe
+        version: blue  # 여기만 blue → green으로 바꾸면 전환 완료
+    ports:
+        - port: 8001
+          targetPort: 8001
+    type: ClusterIP

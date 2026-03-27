@@ -1,0 +1,67 @@
+# Blue Deployment - 현재 운영 버전 (트래픽 수신 중)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sk3024-maintq-fe-blue
+    namespace: skala3-ai1
+spec:
+    replicas: 2
+    selector:
+        matchLabels:
+            app: sk3024-maintq-fe
+            version: blue
+    template:
+        metadata:
+            labels:
+                app: sk3024-maintq-fe
+                version: blue  # Service selector가 이 라벨로 트래픽 전달
+        spec:
+            imagePullSecrets:
+                - name: harbor-pull-secret
+            containers:
+                - name: sk3024-maintq-fe
+                  image: amdp-registry.skala-ai.com/skala26a-ai1/a3024:latest
+                  ports:
+                      - containerPort: 8001
+                  resources:
+                      requests:
+                          cpu: '100m'
+                          memory: '128Mi'
+                      limits:
+                          cpu: '500m'
+                          memory: '512Mi'
+---
+
+# Green Deployment - 새 버전 대기 중 (트래픽 없음)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: sk3024-maintq-fe-green
+    namespace: skala3-ai1
+spec:
+    replicas: 2  # Blue와 동일한 규모로 미리 준비
+    selector:
+        matchLabels:
+            app: sk3024-maintq-fe
+            version: green
+    template:
+        metadata:
+            labels:
+                app: sk3024-maintq-fe
+                version: green  # Service가 현재 이 라벨은 선택 안 함
+        spec:
+            imagePullSecrets:
+                - name: harbor-pull-secret
+            containers:
+                - name: sk3024-maintq-fe
+                  # 실제로는 새 버전 이미지 태그 사용
+                  image: amdp-registry.skala-ai.com/skala26a-ai1/a3024:latest
+                  ports:
+                      - containerPort: 8001
+                  resources:
+                      requests:
+                          cpu: '100m'
+                          memory: '128Mi'
+                      limits:
+                          cpu: '500m'
+                          memory: '512Mi'

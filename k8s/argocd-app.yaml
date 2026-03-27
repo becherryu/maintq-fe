@@ -8,7 +8,8 @@ spec:
     source:
         repoURL: https://github.com/becherryu/maintq-fe
         targetRevision: main
-        path: k8s
+        # path: k8s/canary           # 카나리 배포
+        path: k8s/blue-green  # 블루-그린 배포
     destination:
         server: https://kubernetes.default.svc
         namespace: skala3-ai1

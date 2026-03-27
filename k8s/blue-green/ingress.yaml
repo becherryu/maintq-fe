@@ -1,0 +1,27 @@
+# Ingress - 단일 Service로 연결 (카나리 ingress 불필요)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+    annotations:
+        cert-manager.io/cluster-issuer: letsencrypt-prod
+    name: sk3024-maintq-ingress
+    namespace: skala3-ai1
+    labels:
+        app.kubernetes.io/name: sk3024-maintq-ingress
+spec:
+    ingressClassName: public-nginx
+    rules:
+        - host: sk3024-maintq.project.skala-ai.com
+          http:
+              paths:
+                  - path: /
+                    pathType: Prefix
+                    backend:
+                        service:
+                            name: sk3024-maintq-fe # 단일 service (blue/green 전환은 service에서 처리)
+                            port:
+                                number: 8001
+    tls:
+        - hosts:
+              - 'sk3024-maintq.project.skala-ai.com'
+          secretName: sk3024-maintq-tls
