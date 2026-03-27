@@ -71,10 +71,4 @@ spec:
                       limits:
                           cpu: '500m'
                           memory: '512Mi'
-                  volumeMounts:
-                      - name: sk3024-storage
-                        mountPath: /data
-            volumes:
-                - name: sk3024-storage
-                  persistentVolumeClaim:
-                      claimName: sk3024-pvc
+                  # PVC 마운트 없음 - ReadWriteOnce PVC는 동시에 여러 노드 마운트 불가
