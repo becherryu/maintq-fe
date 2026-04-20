@@ -20,7 +20,7 @@ spec:
                 - name: harbor-pull-secret
             containers:
                 - name: sk3024-maintq-fe
-                  image: amdp-registry.skala-ai.com/skala26a-ai1/a3024:064d295
+                  image: amdp-registry.skala-ai.com/skala26a-ai1/a3024:b549459
                   ports:
                       - containerPort: 8001
                   resources:
@@ -55,7 +55,7 @@ spec:
             containers:
                 - name: sk3024-maintq-fe
                   # 실습에서는 같은 이미지 사용 (실제로는 새 버전 이미지)
-                  image: amdp-registry.skala-ai.com/skala26a-ai1/a3024:064d295
+                  image: amdp-registry.skala-ai.com/skala26a-ai1/a3024:b549459
                   ports:
                       - containerPort: 8001
                   resources:
